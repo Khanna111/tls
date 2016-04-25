@@ -51,7 +51,16 @@ public class App {
 
 	    public void checkServerTrusted(X509Certificate[] chain, String authType) {
 		for (X509Certificate cert : chain) {
-		    LOGGER.debug(cert.toString());
+		    LOGGER.trace("-------------\n" + cert.toString() + "\n-------------\n" );
+		    StringBuilder strB = new StringBuilder();
+		    strB.append("\n******************\n");
+		    strB.append("DN: " +cert.getSubjectX500Principal().getName() + "\n");
+		    strB.append("SN: " +cert.getSerialNumber() + "\n");
+		    strB.append("Issuer DN: " +cert.getIssuerX500Principal().getName() + "\n");
+		    strB.append("BasicConstraints: " +cert.getBasicConstraints() + "\n");
+		    strB.append("\n******************\n");
+		    
+		    LOGGER.debug(strB.toString());
 		}
 
 	    }
