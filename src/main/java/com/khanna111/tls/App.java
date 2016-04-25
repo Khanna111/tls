@@ -1,15 +1,9 @@
 package com.khanna111.tls;
 
-import java.net.InetSocketAddress;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,67 +17,19 @@ public class App {
 
     public static void main(String[] args) {
 	LOGGER.debug("Hello World!");
-	App app = new App();
-	app.start();
-    }
+	ExecutorService e = Executors.newFixedThreadPool(2);
+	Future<String> f1 = e.submit(new Task("symantec.com", 443));
+	Future<String> f2 = e.submit(new Task("google.com", 443));
+	e.shutdown();
 
-    private void start() {
 	try {
-	    SSLSocketFactory factory = createSSLSocketFactory();
-	    SSLSocket socket = (SSLSocket) factory.createSocket();
-	    socket.connect(new InetSocketAddress("symantec.com", 443), 10_000);
-	    socket.setSoTimeout(10_000);
-
-	    socket.addHandshakeCompletedListener(getHandshakeCompletedListener());
-	    socket.startHandshake();
-
+	    LOGGER.info(f1.get());
+	    LOGGER.info(f2.get());
 	}
-	catch (Exception e) {
-	    LOGGER.info("Exception raised at start() : ", e);
+	catch (InterruptedException | ExecutionException e1) {
+	 LOGGER.warn("Excepton at top : ", e);
 	}
 
     }
 
-    private static SSLSocketFactory createSSLSocketFactory() throws Exception {
-
-	SSLContext sslContext = SSLContext.getInstance("TLS");
-	sslContext.init(null, CERT_TM, new SecureRandom());
-	return sslContext.getSocketFactory();
-    }
-
-    private HandshakeCompletedListener getHandshakeCompletedListener() {
-	return hCL;
-    }
-
-    private static final HandshakeCompletedListener hCL = (e) -> {
-	LOGGER.debug(e.getCipherSuite());
-	LOGGER.debug(e.getSession().getProtocol());
-
-    };
-
-    private static final TrustManager[] CERT_TM = new TrustManager[] { new X509TrustManager() {
-	public X509Certificate[] getAcceptedIssuers() {
-	    return new X509Certificate[0];
-	}
-
-	public void checkClientTrusted(X509Certificate[] chain, String authType) {
-	}
-
-	public void checkServerTrusted(X509Certificate[] chain, String authType) {
-	    for (X509Certificate cert : chain) {
-		LOGGER.trace("-------------\n" + cert.toString() + "\n-------------\n");
-		StringBuilder strB = new StringBuilder();
-		strB.append("\n******************\n");
-		strB.append("DN: " + cert.getSubjectX500Principal().getName() + "\n");
-		strB.append("SN: " + cert.getSerialNumber() + "\n");
-		strB.append("PK Algo: " + cert.getPublicKey().getAlgorithm() + "\n");
-		strB.append("Issuer DN: " + cert.getIssuerX500Principal().getName() + "\n");
-		strB.append("BasicConstraints: " + cert.getBasicConstraints() + "\n");
-		strB.append("\n******************\n");
-
-		LOGGER.debug(strB.toString());
-	    }
-
-	}
-    } };
 }
