@@ -1,5 +1,10 @@
 package com.khanna111.tls;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,19 +22,50 @@ public class App {
 
     public static void main(String[] args) {
 	LOGGER.debug("Hello World!");
-	ExecutorService e = Executors.newFixedThreadPool(2);
-	Future<String> f1 = e.submit(new Task("symantec.com", 443));
-	Future<String> f2 = e.submit(new Task("google.com", 443));
-	e.shutdown();
 
-	try {
-	    LOGGER.info(f1.get());
-	    LOGGER.info(f2.get());
+	List<Future<String>> futuresList = new ArrayList<>();
+	ExecutorService executor = Executors.newFixedThreadPool(2);
+	try (BufferedReader bR = new BufferedReader(
+		new FileReader(Paths.get("/app/workspace/eclipse-mars/tls/resources/top-10.csv").toFile()))) {
+	    String line = null;
+	    while ((line = bR.readLine()) != null) {
+		if (line.trim().length() == 0) {
+		    LOGGER.warn("Empty String");
+		    continue;
+		}
+		Task task = getTask(line);
+		if (task != null) {
+		    futuresList.add(executor.submit(task));
+		}
+	    }
+	    executor.shutdown();
+
+	    for (Future<String> f : futuresList) {
+		try {
+		    LOGGER.info(f.get());
+		}
+		catch (InterruptedException | ExecutionException e1) {
+		    LOGGER.warn("Excepton at top : ", e1);
+		}
+	    }
+
 	}
-	catch (InterruptedException | ExecutionException e1) {
-	 LOGGER.warn("Excepton at top : ", e);
+	catch (Exception e) {
+	    LOGGER.warn("Unable to operate in file data", e);
 	}
 
     }
 
+    private static Task getTask(String line) {
+	try {
+	    String hostName = line.substring(line.lastIndexOf(",") + 1);
+	    int rank = Integer.parseInt(line.substring(0, line.indexOf(",")));
+	    return new Task(rank, hostName, 443);
+	}
+	catch (Exception e) {
+	    LOGGER.warn("Exception creating Task for line - {}: ", line, e);
+	    return null;
+	}
+
+    }
 }

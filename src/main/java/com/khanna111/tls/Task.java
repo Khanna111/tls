@@ -23,8 +23,10 @@ public class Task implements Callable<String> {
 
     private String hostName;
     private int port;
+    private int rank;
 
-    public Task(String hostName, int port) {
+    public Task(int rank, String hostName, int port) {
+	this.rank = rank;
 	this.hostName = hostName;
 	this.port = port;
     }
@@ -32,33 +34,31 @@ public class Task implements Callable<String> {
     public String call() {
 	try {
 	    printStr.set(new StringBuilder());
+	    printStr.get().append("**rank:" + rank);
+	    printStr.get().append("**HostName:" + hostName);
 	    start();
 	    return printStr.get().toString();
 	}
 	catch (Throwable t) {
-	    LOGGER.warn("Throwable at the top", t);
-	    return null;
+	    LOGGER.warn("Throwable at the task top - {} - {} - {} ", printStr.get().toString(), t.getMessage(),
+		    t.getClass().getName());
+	    LOGGER.debug("", t);
+	    return printStr.get().append("**").append("Exception: " + t.getMessage() + " -- " + t.getClass().getName())
+		    .toString();
 	}
 	finally {
 	    printStr.remove();
 	}
     }
 
-    private void start() {
-	try {
-	    SSLSocketFactory factory = createSSLSocketFactory();
-	    SSLSocket socket = (SSLSocket) factory.createSocket();
-	    socket.connect(new InetSocketAddress(hostName, port), 10_000);
-	    socket.setSoTimeout(10_000);
+    private void start() throws Exception {
+	SSLSocketFactory factory = createSSLSocketFactory();
+	SSLSocket socket = (SSLSocket) factory.createSocket();
+	socket.connect(new InetSocketAddress(hostName, port), 10_000);
+	socket.setSoTimeout(10_000);
 
-	    socket.addHandshakeCompletedListener(getHandshakeCompletedListener());
-	    socket.startHandshake();
-
-	}
-	catch (Exception e) {
-	    LOGGER.info("Exception raised at start() : ", e);
-	    printStr.get().append("**").append("Exception: " + e.getMessage());
-	}
+	socket.addHandshakeCompletedListener(getHandshakeCompletedListener());
+	socket.startHandshake();
 
     }
 
@@ -74,13 +74,11 @@ public class Task implements Callable<String> {
     }
 
     private static final HandshakeCompletedListener hCL = (e) -> {
-//	printStr.get().append("**").append(e.getCipherSuite());
-//	printStr.get().append("**").append(e.getSession().getProtocol());
-	
+	// printStr.get().append("**").append(e.getCipherSuite());
+	// printStr.get().append("**").append(e.getSession().getProtocol());
+
     };
 
-    
-    
     private static final TrustManager[] CERT_TM = new TrustManager[] { new X509TrustManager() {
 	public X509Certificate[] getAcceptedIssuers() {
 	    return new X509Certificate[0];
@@ -96,19 +94,19 @@ public class Task implements Callable<String> {
 		strB.append("\n******************\n");
 		strB.append("DN: " + cert.getSubjectX500Principal().getName() + "\n");
 		printStr.get().append("**").append("DN: " + cert.getSubjectX500Principal().getName());
-		
+
 		strB.append("SN: " + cert.getSerialNumber() + "\n");
 		printStr.get().append("**").append("SN: " + cert.getSerialNumber());
-			
+
 		strB.append("PK Algo: " + cert.getPublicKey().getAlgorithm() + "\n");
 		printStr.get().append("**").append("PK Algo: " + cert.getPublicKey().getAlgorithm());
-			
+
 		strB.append("Issuer DN: " + cert.getIssuerX500Principal().getName() + "\n");
 		printStr.get().append("**").append("Issuer DN: " + cert.getIssuerX500Principal().getName());
-			
+
 		strB.append("BasicConstraints: " + cert.getBasicConstraints() + "\n");
 		printStr.get().append("**").append("BasicConstraints: " + cert.getBasicConstraints());
-			
+
 		strB.append("\n******************\n");
 
 		LOGGER.debug(strB.toString());
