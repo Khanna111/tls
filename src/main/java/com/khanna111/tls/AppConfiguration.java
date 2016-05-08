@@ -21,35 +21,35 @@ public class AppConfiguration {
     private String readTimeOutMs;
 
     public String getExecPoolSize() {
-        return execPoolSize;
+	return execPoolSize;
     }
 
     public void setExecPoolSize(String execPoolSize) {
-        this.execPoolSize = execPoolSize;
+	this.execPoolSize = execPoolSize;
     }
 
     public String getTopSitesPath() {
-        return topSitesPath;
+	return topSitesPath;
     }
 
     public void setTopSitesPath(String topSitesPath) {
-        this.topSitesPath = topSitesPath;
+	this.topSitesPath = topSitesPath;
     }
 
     public String getConnectTimeOutMs() {
-        return connectTimeOutMs;
+	return connectTimeOutMs;
     }
 
     public void setConnectTimeOutMs(String connectTimeOutMs) {
-        this.connectTimeOutMs = connectTimeOutMs;
+	this.connectTimeOutMs = connectTimeOutMs;
     }
 
     public String getReadTimeOutMs() {
-        return readTimeOutMs;
+	return readTimeOutMs;
     }
 
     public void setReadTimeOutMs(String readTimeOutMs) {
-        this.readTimeOutMs = readTimeOutMs;
+	this.readTimeOutMs = readTimeOutMs;
     }
 
 }
