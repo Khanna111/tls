@@ -15,6 +15,11 @@ import javax.net.ssl.X509TrustManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * @author gkhanna
+ *
+ */
 public class Task implements Callable<String> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Task.class);
@@ -24,11 +29,14 @@ public class Task implements Callable<String> {
     private String hostName;
     private int port;
     private int rank;
+    
+    private AppUtil appUtil;
 
-    public Task(int rank, String hostName, int port) {
+    public Task(int rank, String hostName, int port, AppUtil appUtil) {
 	this.rank = rank;
 	this.hostName = hostName;
 	this.port = port;
+	this.appUtil = appUtil;
     }
 
     public String call() {
@@ -54,8 +62,8 @@ public class Task implements Callable<String> {
     private void start() throws Exception {
 	SSLSocketFactory factory = createSSLSocketFactory();
 	SSLSocket socket = (SSLSocket) factory.createSocket();
-	socket.connect(new InetSocketAddress(hostName, port), 10_000);
-	socket.setSoTimeout(10_000);
+	socket.connect(new InetSocketAddress(hostName, port), Integer.parseInt(appUtil.getAppConfig().getConnectTimeOutMs()));
+	socket.setSoTimeout(Integer.parseInt(appUtil.getAppConfig().getReadTimeOutMs()));
 
 	socket.addHandshakeCompletedListener(getHandshakeCompletedListener());
 	socket.startHandshake();
@@ -81,38 +89,24 @@ public class Task implements Callable<String> {
 
     private static final TrustManager[] CERT_TM = new TrustManager[] { new X509TrustManager() {
 	public X509Certificate[] getAcceptedIssuers() {
-	    return new X509Certificate[0];
-	}
+	    return new X509Certificate[0];}
 
-	public void checkClientTrusted(X509Certificate[] chain, String authType) {
-	}
+    public void checkClientTrusted(X509Certificate[]chain,String authType){}
 
-	public void checkServerTrusted(X509Certificate[] chain, String authType) {
-	    for (X509Certificate cert : chain) {
-		LOGGER.trace("-------------\n" + cert.toString() + "\n-------------\n");
-		StringBuilder strB = new StringBuilder();
-		strB.append("\n******************\n");
-		strB.append("DN: " + cert.getSubjectX500Principal().getName() + "\n");
-		printStr.get().append("**").append("DN: " + cert.getSubjectX500Principal().getName());
+    public void checkServerTrusted(X509Certificate[]chain,String authType){for(X509Certificate cert:chain){LOGGER.trace("-------------\n"+cert.toString()+"\n-------------\n");StringBuilder strB=new StringBuilder();strB.append("\n******************\n");strB.append("DN: "+cert.getSubjectX500Principal().getName()+"\n");printStr.get().append("**").append("DN: "+cert.getSubjectX500Principal().getName());
 
-		strB.append("SN: " + cert.getSerialNumber() + "\n");
-		printStr.get().append("**").append("SN: " + cert.getSerialNumber());
+    strB.append("SN: "+cert.getSerialNumber()+"\n");printStr.get().append("**").append("SN: "+cert.getSerialNumber());
 
-		strB.append("PK Algo: " + cert.getPublicKey().getAlgorithm() + "\n");
-		printStr.get().append("**").append("PK Algo: " + cert.getPublicKey().getAlgorithm());
+    strB.append("PK Algo: "+cert.getPublicKey().getAlgorithm()+"\n");printStr.get().append("**").append("PK Algo: "+cert.getPublicKey().getAlgorithm());
 
-		strB.append("Issuer DN: " + cert.getIssuerX500Principal().getName() + "\n");
-		printStr.get().append("**").append("Issuer DN: " + cert.getIssuerX500Principal().getName());
+    strB.append("Issuer DN: "+cert.getIssuerX500Principal().getName()+"\n");printStr.get().append("**").append("Issuer DN: "+cert.getIssuerX500Principal().getName());
 
-		strB.append("BasicConstraints: " + cert.getBasicConstraints() + "\n");
-		printStr.get().append("**").append("BasicConstraints: " + cert.getBasicConstraints());
+    strB.append("BasicConstraints: "+cert.getBasicConstraints()+"\n");printStr.get().append("**").append("BasicConstraints: "+cert.getBasicConstraints());
 
-		strB.append("\n******************\n");
+    strB.append("\n******************\n");
 
-		LOGGER.debug(strB.toString());
-	    }
+    LOGGER.debug(strB.toString());}
 
-	}
-    } };
+    }}};
 
 }
