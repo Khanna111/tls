@@ -1,6 +1,14 @@
 # tls
 
- cat tls1.log  | grep rank| sed -n -e 's/^.*Issuer confirm//p' | sed -n -e 's/\*\*.*$//p' | sort > a
+Reviews the top 1M Alexa sites for the CA aspect of the TLS / SSL certificate tp figure out the CA market share. 
+
+Spawns multiple tasks and threads. (Java concurrency, Executors etc.)
+
+Ran on AWS EC2.
+
+# Usage:
+
+$ cat tls1.log  | grep rank| sed -n -e 's/^.*Issuer confirm//p' | sed -n -e 's/\*\*.*$//p' | sort > a
  
 ec2-user@ip-10-234-20-108[ 10.234.20.108 ]--/app--
 $ vi a
